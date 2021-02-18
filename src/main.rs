@@ -6,6 +6,7 @@ mod watch;
 
 use ace::App;
 use config::{Config, Hosts, MultipleInvalid, Parser};
+use crabby_dns::{self, buffer::Deserialize};
 use dirs;
 use futures::prelude::*;
 use lazy_static::lazy_static;
@@ -264,7 +265,18 @@ async fn run_server(addr: SocketAddr) {
         };
 
         let res = match handle(req, len).await {
-            Ok(data) => data,
+            Ok(data) => {
+                let mut buf = crabby_dns::buffer::BytePacketBuffer::new();
+                buf.fill_from_slice(&data[..]);
+
+                if let Ok(msg) = crabby_dns::dns::Message::deserialize(&mut buf) {
+                    info!("woah we got a message! {:?}", msg);
+                } else {
+                    info!("Problem deserializing")
+                }
+
+                data
+            }
             Err(err) => {
                 error!("Processing request failed {:?}", err);
                 continue;
