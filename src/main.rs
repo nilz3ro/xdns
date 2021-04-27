@@ -264,6 +264,8 @@ async fn run_server(addr: SocketAddr) {
             }
         };
 
+        info!("client ip is : {:?}", src);
+
         let res = match handle(req, len).await {
             Ok(data) => {
                 let mut buf = crabby_dns::buffer::BytePacketBuffer::new();
